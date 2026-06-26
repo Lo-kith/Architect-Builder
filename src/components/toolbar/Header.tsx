@@ -22,7 +22,7 @@ export default function Header({ onExportFigma }: HeaderProps) {
         </div>
         <div>
           <div className={`text-[13px] font-bold tracking-tight ${text}`}>Architect Builder</div>
-          <div className={`text-[9px] uppercase tracking-widest ${sub}`}>by Figma Community</div>
+          <div className={`text-[9px] uppercase tracking-widest ${sub}`}>by Loki</div>
         </div>
       </div>
 
