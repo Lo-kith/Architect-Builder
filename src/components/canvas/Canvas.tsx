@@ -11,9 +11,8 @@ import ReactFlow, {
   Edge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { useStore } from '../../store/diagramStore';
-import ArchNodeComponent from '../../nodes/ArchNode';
-import { COMPONENTS } from '../../nodes/componentDefs';
+import { useStore } from '../../store';
+import { ArchNode as ArchNodeComponent, COMPONENTS } from '../../nodes';
 import { ArchNode, NodeCategory } from '../../types';
 
 const nodeTypes: NodeTypes = {

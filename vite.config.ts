@@ -6,7 +6,18 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      input: resolve(__dirname, 'index.html'),
+      input: {
+        ui: resolve(__dirname, 'index.html'),
+        main: resolve(__dirname, 'src/plugin/controller.ts'),
+      },
+      output: {
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.name === 'main') {
+            return 'plugin/main.js';
+          }
+          return 'assets/[name]-[hash].js';
+        },
+      },
     },
     outDir: 'dist',
     emptyOutDir: true,

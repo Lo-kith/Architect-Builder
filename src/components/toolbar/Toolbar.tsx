@@ -4,7 +4,7 @@ import {
   Moon, Sun, RotateCcw, RotateCw, LayoutGrid, AlignHorizontalJustifyCenter,
   AlignVerticalJustifyCenter, TreePine, Share2,
 } from 'lucide-react';
-import { useStore } from '../../store/diagramStore';
+import { useStore } from '../../store';
 import { useReactFlow } from 'reactflow';
 import { AutoLayoutDirection } from '../../types';
 

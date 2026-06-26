@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Tag, FileText, Settings2, Palette } from 'lucide-react';
-import { useStore } from '../../store/diagramStore';
-import { CATEGORY_LABELS } from '../../nodes/componentDefs';
+import { useStore } from '../../store';
+import { CATEGORY_LABELS } from '../../nodes';
 
 const PRESET_COLORS = [
   '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f97316',

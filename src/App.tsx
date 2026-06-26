@@ -1,13 +1,9 @@
 import { useEffect, useCallback } from 'react';
 import { ReactFlowProvider } from 'reactflow';
-import { useStore } from './store/diagramStore';
-import Header from './components/toolbar/Header';
-import Toolbar from './components/toolbar/Toolbar';
-import Sidebar from './components/sidebar/Sidebar';
-import Canvas from './components/canvas/Canvas';
-import PropertiesPanel from './components/panels/PropertiesPanel';
-import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { exportToJSON, importFromJSON, triggerFileInput } from './utils/export';
+import { useStore } from './store';
+import { Header, Toolbar, Sidebar, Canvas, PropertiesPanel } from './components';
+import { useKeyboardShortcuts } from './hooks';
+import { exportToJSON, importFromJSON, triggerFileInput } from './utils';
 
 function AppInner() {
   const { isDarkMode, nodes, edges, loadTemplate } = useStore();

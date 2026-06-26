@@ -1,5 +1,5 @@
 import { Hexagon, ChevronDown } from 'lucide-react';
-import { useStore } from '../../store/diagramStore';
+import { useStore } from '../../store';
 
 interface HeaderProps {
   onExportFigma?: () => void;

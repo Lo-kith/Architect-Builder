@@ -4,8 +4,8 @@ import {
   Heart, X
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
-import { useStore } from '../../store/diagramStore';
-import { COMPONENTS, CATEGORY_LABELS, CATEGORY_COLORS } from '../../nodes/componentDefs';
+import { useStore } from '../../store';
+import { COMPONENTS, CATEGORY_LABELS, CATEGORY_COLORS } from '../../nodes';
 import { TEMPLATES } from '../../templates';
 import { ComponentDefinition, NodeCategory } from '../../types';
 
