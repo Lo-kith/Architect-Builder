@@ -41,7 +41,7 @@ const ArchNodeComponent = ({ id, data }: NodeProps<ArchNodeData>) => {
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative min-w-[160px] max-w-[220px] cursor-pointer select-none transition-all duration-200 ease-out ${shadowClass}`}
+      className={`group relative min-w-[148px] max-w-[210px] cursor-pointer select-none transition-all duration-200 ease-out ${shadowClass}`}
       style={{
         borderRadius: data.style.borderRadius,
         border: `2px solid ${borderColor}`,
@@ -61,13 +61,13 @@ const ArchNodeComponent = ({ id, data }: NodeProps<ArchNodeData>) => {
       <div className="px-3 py-2.5">
         <div className="flex items-center gap-2 mb-1">
           <div
-            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+            className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center"
             style={{ background: data.style.background + '22', color: data.style.background }}
           >
-            <DynamicIcon name={data.icon} size={16} />
+            <DynamicIcon name={data.icon} size={15} />
           </div>
           <div className="min-w-0">
-            <div className={`text-[13px] font-semibold leading-tight truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <div className={`text-[12px] font-semibold leading-tight truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               {data.label}
             </div>
             {data.subtitle && (
@@ -99,18 +99,18 @@ const ArchNodeComponent = ({ id, data }: NodeProps<ArchNodeData>) => {
         )}
       </div>
 
-      {/* Handles */}
+      {/* Handles — appear when node is hovered */}
       <Handle type="target" position={Position.Top}
-        className="!w-2.5 !h-2.5 !border-2 !border-white/80 !-top-[6px] opacity-0 hover:opacity-100 transition-opacity"
+        className="!w-2.5 !h-2.5 !border-2 !border-white/80 !-top-[6px] opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         style={{ background: data.style.background }} />
       <Handle type="source" position={Position.Bottom}
-        className="!w-2.5 !h-2.5 !border-2 !border-white/80 !-bottom-[6px] opacity-0 hover:opacity-100 transition-opacity"
+        className="!w-2.5 !h-2.5 !border-2 !border-white/80 !-bottom-[6px] opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         style={{ background: data.style.background }} />
       <Handle type="source" position={Position.Right} id="right"
-        className="!w-2.5 !h-2.5 !border-2 !border-white/80 !-right-[6px] opacity-0 hover:opacity-100 transition-opacity"
+        className="!w-2.5 !h-2.5 !border-2 !border-white/80 !-right-[6px] opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         style={{ background: data.style.background }} />
       <Handle type="target" position={Position.Left} id="left"
-        className="!w-2.5 !h-2.5 !border-2 !border-white/80 !-left-[6px] opacity-0 hover:opacity-100 transition-opacity"
+        className="!w-2.5 !h-2.5 !border-2 !border-white/80 !-left-[6px] opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         style={{ background: data.style.background }} />
     </div>
   );

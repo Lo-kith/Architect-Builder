@@ -6,7 +6,6 @@ import ReactFlow, {
   BackgroundVariant,
   Connection,
   NodeTypes,
-  EdgeTypes,
   MarkerType,
   Edge,
 } from 'reactflow';
@@ -24,6 +23,22 @@ export default function Canvas() {
     nodes, edges, onNodesChange, onEdgesChange,
     addEdge: storeAddEdge, isDarkMode, selectNode, selectEdge,
   } = useStore();
+
+  // Sync all visual edge props from data on every render so Properties Panel changes show live
+  const visualEdges = edges.map((e) => {
+    const d = e.data ?? { color: '#94a3b8', style: 'smoothstep', animated: false, strokeWidth: 2 };
+    return {
+      ...e,
+      type: d.style === 'bezier' ? 'default' : d.style,
+      animated: d.animated,
+      style: { stroke: d.color, strokeWidth: d.strokeWidth },
+      markerEnd: { type: MarkerType.ArrowClosed, color: d.color },
+      labelStyle: { fill: '#cbd5e1', fontSize: 10, fontWeight: 500 },
+      labelBgStyle: { fill: isDarkMode ? '#1e2030' : '#f1f5f9', fillOpacity: 0.92 },
+      labelBgPadding: [5, 3] as [number, number],
+      labelBgBorderRadius: 4,
+    };
+  });
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const dark = isDarkMode;
@@ -94,7 +109,7 @@ export default function Canvas() {
     <div ref={reactFlowWrapper} className="flex-1 h-full relative">
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={visualEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}

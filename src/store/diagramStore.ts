@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { addEdge as rfAddEdge, applyNodeChanges, applyEdgeChanges, Connection, NodeChange, EdgeChange, MarkerType } from 'reactflow';
-import { ArchNode, ArchEdge, DiagramState, SidebarTab, AutoLayoutDirection, EdgeStyle } from '../types';
+import { ArchNode, ArchEdge, DiagramState, SidebarTab, AutoLayoutDirection, EdgeStyle, ArchEdgeData } from '../types';
 
 interface DiagramActions {
   setNodes: (nodes: ArchNode[]) => void;
@@ -10,7 +10,7 @@ interface DiagramActions {
   onNodesChange: (changes: NodeChange[]) => void;
   setEdges: (edges: ArchEdge[]) => void;
   addEdge: (connection: Connection) => void;
-  updateEdge: (id: string, data: Partial<ArchEdge['data']> | Record<string, unknown>) => void;
+  updateEdge: (id: string, updates: Partial<ArchEdge['data']> | Record<string, unknown>) => void;
   deleteEdge: (id: string) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   selectNode: (id: string | null) => void;
@@ -93,9 +93,24 @@ export const useStore = create<Store>((set, get) => ({
     set((s) => ({ edges: rfAddEdge(newEdge, s.edges) as ArchEdge[] }));
   },
 
-  updateEdge: (id, data) =>
+  updateEdge: (id, updates) =>
     set((s) => ({
-      edges: s.edges.map((e) => e.id === id ? { ...e, data: { ...e.data, ...data } as ArchEdge['data'] } : e),
+      edges: s.edges.map((e) => {
+        if (e.id !== id || !updates) return e;
+        const base: ArchEdgeData = e.data ?? {
+          color: '#94a3b8', style: 'smoothstep' as EdgeStyle, animated: false, strokeWidth: 2,
+        };
+        const newData: ArchEdgeData = { ...base, ...(updates as Partial<ArchEdgeData>) };
+        return {
+          ...e,
+          data: newData,
+          label: 'label' in updates ? (updates as Record<string, unknown>).label as string : e.label,
+          type: newData.style === 'bezier' ? 'default' : newData.style,
+          animated: newData.animated,
+          style: { stroke: newData.color, strokeWidth: newData.strokeWidth },
+          markerEnd: { type: MarkerType.ArrowClosed, color: newData.color },
+        };
+      }),
     })),
 
   deleteEdge: (id) => {

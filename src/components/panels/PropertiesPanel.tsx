@@ -251,7 +251,7 @@ export default function PropertiesPanel() {
         <div className="flex-1 overflow-y-auto p-3">
           <Field>
             <Label>Label</Label>
-            <input className={inputCls} value={selectedEdge.label as string || ''} onChange={(e) => updateEdge(selectedEdge.id, { label: e.target.value } as any)} placeholder="e.g. HTTP/JSON" />
+            <input className={inputCls} value={selectedEdge.label as string || ''} onChange={(e) => updateEdge(selectedEdge.id, { label: e.target.value } as Record<string, unknown>)} placeholder="e.g. HTTP/JSON" />
           </Field>
           <Field>
             <Label>Style</Label>
