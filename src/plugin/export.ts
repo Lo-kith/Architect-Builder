@@ -1,174 +1,168 @@
 /// <reference types="@figma/plugin-typings" />
 import { ArchNode, ArchEdge } from '../types';
 
+// Helper: parse a hex color string to Figma RGB (0-1 range)
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  let h = hex.replace('#', '');
+  if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  if (h.length !== 6) h = '6366f1';
+  return {
+    r: parseInt(h.slice(0, 2), 16) / 255,
+    g: parseInt(h.slice(2, 4), 16) / 255,
+    b: parseInt(h.slice(4, 6), 16) / 255,
+  };
+}
+
+// Try to load a font; fall back gracefully
+async function loadFont(family: string, style: string): Promise<{ family: string; style: string }> {
+  try {
+    await figma.loadFontAsync({ family, style });
+    return { family, style };
+  } catch {
+    // Roboto is always bundled in Figma — use as universal fallback
+    await figma.loadFontAsync({ family: 'Roboto', style });
+    return { family: 'Roboto', style };
+  }
+}
+
 export async function exportToFigma(payload: { nodes: ArchNode[]; edges: ArchEdge[] }): Promise<void> {
+  // Load fonts up front — fall back to Roboto if Inter is unavailable
+  const boldFont  = await loadFont('Inter', 'Semi Bold');
+  const regFont   = await loadFont('Inter', 'Regular');
+
+  // ── Create the outer frame ────────────────────────────────────────────────
+  const PADDING = 60;
+  const NODE_W  = 180;
+  const NODE_H  = 70;
+
   const frame = figma.createFrame();
   frame.name = 'Architecture Diagram';
   frame.resize(1400, 900);
-  frame.fills = [{ type: 'SOLID', color: { r: 0.08, g: 0.08, b: 0.1 } }];
+  // White/light background so nodes are clearly visible
+  frame.fills = [{ type: 'SOLID', color: { r: 0.96, g: 0.97, b: 0.98 } }];
   frame.cornerRadius = 16;
 
   const nodeMap: Record<string, FrameNode> = {};
 
-  // Load fonts once before starting the loop for high performance
-  await figma.loadFontAsync({ family: 'Inter', style: 'SemiBold' });
-  await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
-
+  // ── Create node boxes ─────────────────────────────────────────────────────
   for (const node of payload.nodes) {
+    const accentColor = hexToRgb(node.data?.style?.background || '#6366f1');
     const borderRadius = node.data?.style?.borderRadius ?? 12;
+    const hasDesc = !!node.data?.description;
+    const tags = Array.isArray(node.data?.metadata?.tags) ? node.data.metadata.tags as string[] : [];
+    const hasTags = tags.length > 0;
 
-    // Parse accent color
-    const bgStr = node.data?.style?.background || '#6366f1';
-    let hex = bgStr.replace('#', '');
-    if (hex.length === 3) {
-      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-    }
-    if (hex.length !== 6) {
-      hex = '6366f1';
-    }
-    const r = (parseInt(hex.slice(0, 2), 16) || 0) / 255;
-    const g = (parseInt(hex.slice(2, 4), 16) || 0) / 255;
-    const b = (parseInt(hex.slice(4, 6), 16) || 0) / 255;
+    // Dynamic height
+    let boxH = NODE_H;
+    if (hasDesc) boxH += 22;
+    if (hasTags) boxH += 20;
 
-    // Parse border color
-    const borderStr = node.data?.style?.border || '#2e303f';
-    let borderHex = borderStr.replace('#', '');
-    if (borderHex.length === 3) {
-      borderHex = borderHex[0] + borderHex[0] + borderHex[1] + borderHex[1] + borderHex[2] + borderHex[2];
-    }
-    if (borderHex.length !== 6) {
-      borderHex = '2e303f';
-    }
-    const br = (parseInt(borderHex.slice(0, 2), 16) || 0) / 255;
-    const bg = (parseInt(borderHex.slice(2, 4), 16) || 0) / 255;
-    const bb = (parseInt(borderHex.slice(4, 6), 16) || 0) / 255;
-
-    // Calculate dynamic height based on content
-    const hasDescription = !!node.data?.description;
-    const hasTags = node.data?.metadata?.tags && Array.isArray(node.data.metadata.tags) && node.data.metadata.tags.length > 0;
-    
-    let boxHeight = 56;
-    if (hasDescription) boxHeight += 22;
-    if (hasTags) boxHeight += 18;
-
-    // Create the main box frame
+    // Main card — white background with colored left border accent
     const box = figma.createFrame();
-    box.resize(180, boxHeight);
-    box.x = node.position.x;
-    box.y = node.position.y;
+    box.resize(NODE_W, boxH);
+    box.x = node.position.x + PADDING;
+    box.y = node.position.y + PADDING;
     box.cornerRadius = borderRadius;
     box.name = node.data?.label || 'Node';
-
-    // Fills: Dark theme background matching React UI (#1a1b24)
-    box.fills = [{ type: 'SOLID', color: { r: 26/255, g: 27/255, b: 36/255 } }];
-    box.strokes = [{ type: 'SOLID', color: { r: br, g: bg, b: bb } }];
-    box.strokeWeight = 1.5;
-
-    // Add drop shadow if configured
+    box.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }]; // white card
+    box.strokes = [{ type: 'SOLID', color: { r: 0.9, g: 0.9, b: 0.92 } }];
+    box.strokeWeight = 1;
     if (node.data?.style?.shadow) {
       box.effects = [{
         type: 'DROP_SHADOW',
-        color: { r: 0, g: 0, b: 0, a: 0.25 },
-        offset: { x: 0, y: 4 },
-        radius: 12,
+        color: { r: 0, g: 0, b: 0, a: 0.1 },
+        offset: { x: 0, y: 2 },
+        radius: 8,
         visible: true,
-        blendMode: 'NORMAL'
+        blendMode: 'NORMAL',
       }];
     }
 
-    // Create the top accent bar
+    // Top accent bar (colored strip)
     const accentBar = figma.createRectangle();
-    accentBar.resize(180, 4);
+    accentBar.resize(NODE_W, 4);
     accentBar.x = 0;
     accentBar.y = 0;
-    accentBar.fills = [{ type: 'SOLID', color: { r, g, b } }];
-    // Round top corners of the accent bar to match box
+    accentBar.fills = [{ type: 'SOLID', color: accentColor }];
     accentBar.topLeftRadius = borderRadius;
     accentBar.topRightRadius = borderRadius;
     box.appendChild(accentBar);
 
-    // Create the icon container
-    const iconContainer = figma.createFrame();
-    iconContainer.resize(32, 32);
-    iconContainer.x = 12;
-    iconContainer.y = 12;
-    iconContainer.cornerRadius = 8;
-    iconContainer.fills = [{ type: 'SOLID', color: { r, g, b }, opacity: 0.13 }];
-    
-    // Simple visual indicator inside the icon container
-    const innerIcon = figma.createEllipse();
-    innerIcon.resize(10, 10);
-    innerIcon.x = 11;
-    innerIcon.y = 11;
-    innerIcon.fills = [{ type: 'SOLID', color: { r, g, b } }];
-    iconContainer.appendChild(innerIcon);
-    box.appendChild(iconContainer);
+    // Icon container (colored circle)
+    const iconBg = figma.createEllipse();
+    iconBg.resize(28, 28);
+    iconBg.x = 12;
+    iconBg.y = 12;
+    iconBg.fills = [{ type: 'SOLID', color: accentColor, opacity: 0.15 }];
+    box.appendChild(iconBg);
 
-    // Create Title/Label
-    const label = figma.createText();
-    label.fontName = { family: 'Inter', style: 'SemiBold' };
-    label.fontSize = 13;
-    label.characters = node.data?.label || 'Node';
-    label.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
-    label.x = 52;
-    label.y = 13;
-    box.appendChild(label);
+    // Accent dot inside icon
+    const dot = figma.createEllipse();
+    dot.resize(10, 10);
+    dot.x = 21;
+    dot.y = 21;
+    dot.fills = [{ type: 'SOLID', color: accentColor }];
+    box.appendChild(dot);
 
-    // Create Subtitle (if present)
+    // Label
+    const labelText = figma.createText();
+    labelText.fontName = boldFont;
+    labelText.fontSize = 12;
+    labelText.characters = node.data?.label || 'Node';
+    labelText.fills = [{ type: 'SOLID', color: { r: 0.1, g: 0.11, b: 0.14 } }];
+    labelText.x = 48;
+    labelText.y = 11;
+    box.appendChild(labelText);
+
+    // Subtitle
     if (node.data?.subtitle) {
       const sub = figma.createText();
-      sub.fontName = { family: 'Inter', style: 'Regular' };
-      sub.fontSize = 9.5;
+      sub.fontName = regFont;
+      sub.fontSize = 9;
       sub.characters = node.data.subtitle;
-      sub.fills = [{ type: 'SOLID', color: { r: 0.6, g: 0.64, b: 0.7 } }];
-      sub.x = 52;
-      sub.y = 29;
+      sub.fills = [{ type: 'SOLID', color: { r: 0.5, g: 0.52, b: 0.58 } }];
+      sub.x = 48;
+      sub.y = 27;
       box.appendChild(sub);
     }
 
-    // Create Description (if present)
-    if (hasDescription && node.data?.description) {
+    // Description
+    if (hasDesc && node.data?.description) {
       const desc = figma.createText();
-      desc.fontName = { family: 'Inter', style: 'Regular' };
+      desc.fontName = regFont;
       desc.fontSize = 9;
-      desc.characters = node.data.description;
-      desc.fills = [{ type: 'SOLID', color: { r: 0.5, g: 0.53, b: 0.6 } }];
+      desc.characters = node.data.description.slice(0, 60);
+      desc.fills = [{ type: 'SOLID', color: { r: 0.55, g: 0.57, b: 0.62 } }];
       desc.x = 12;
-      desc.y = 50;
+      desc.y = NODE_H - 2;
       desc.resize(156, 14);
       box.appendChild(desc);
     }
 
-    // Create Tags (if present)
-    if (hasTags && node.data?.metadata?.tags) {
-      const tagY = hasDescription ? 70 : 50;
-      let currentX = 12;
-      // Limit to 2 tags
-      const tagsList = node.data.metadata.tags.slice(0, 2);
-      
-      for (const tagText of tagsList) {
+    // Tags
+    if (hasTags) {
+      const tagY = hasDesc ? NODE_H + 20 : NODE_H - 2;
+      let cx = 12;
+      for (const tagText of tags.slice(0, 2)) {
         const tagFrame = figma.createFrame();
         tagFrame.cornerRadius = 4;
-        tagFrame.fills = [{ type: 'SOLID', color: { r, g, b }, opacity: 0.13 }];
+        tagFrame.fills = [{ type: 'SOLID', color: accentColor, opacity: 0.12 }];
         tagFrame.y = tagY;
 
         const txt = figma.createText();
-        txt.fontName = { family: 'Inter', style: 'Regular' };
+        txt.fontName = regFont;
         txt.fontSize = 8;
         txt.characters = tagText;
-        txt.fills = [{ type: 'SOLID', color: { r, g, b } }];
+        txt.fills = [{ type: 'SOLID', color: accentColor }];
         txt.x = 5;
         txt.y = 3;
-
         tagFrame.appendChild(txt);
-        
-        // Set size dynamically based on characters
-        const estimatedWidth = Math.max(tagText.length * 5 + 10, 20);
-        tagFrame.resize(estimatedWidth, 14);
-        tagFrame.x = currentX;
 
+        const tw = Math.max(tagText.length * 5 + 10, 24);
+        tagFrame.resize(tw, 14);
+        tagFrame.x = cx;
         box.appendChild(tagFrame);
-        currentX += estimatedWidth + 6;
+        cx += tw + 6;
       }
     }
 
@@ -176,28 +170,33 @@ export async function exportToFigma(payload: { nodes: ArchNode[]; edges: ArchEdg
     nodeMap[node.id] = box;
   }
 
-  // Create native Figma connectors for each connection
-  if (payload.edges && Array.isArray(payload.edges)) {
-    for (const edge of payload.edges) {
-      const sourceNode = nodeMap[edge.source];
-      const targetNode = nodeMap[edge.target];
-      if (!sourceNode || !targetNode) continue;
+  // ── Create connectors ─────────────────────────────────────────────────────
+  for (const edge of payload.edges ?? []) {
+    const src = nodeMap[edge.source];
+    const tgt = nodeMap[edge.target];
+    if (!src || !tgt) continue;
 
-      const connector = figma.createConnector();
-      connector.strokeWeight = 2;
-      connector.strokes = [{ type: 'SOLID', color: { r: 0.58, g: 0.64, b: 0.72 } }]; // #94a3b8
+    const connector = figma.createConnector();
+    const edgeColor = hexToRgb((edge.data?.color) || '#94a3b8');
+    connector.strokeWeight = edge.data?.strokeWidth ?? 2;
+    connector.strokes = [{ type: 'SOLID', color: edgeColor }];
+    connector.connectorStart = { endpointNodeId: src.id, magnet: 'AUTO' };
+    connector.connectorEnd   = { endpointNodeId: tgt.id, magnet: 'AUTO' };
 
-      connector.connectorStart = {
-        endpointNodeId: sourceNode.id,
-        magnet: 'AUTO',
-      };
-      connector.connectorEnd = {
-        endpointNodeId: targetNode.id,
-        magnet: 'AUTO',
-      };
-
-      frame.appendChild(connector);
+    // Add edge label as text if present
+    if (edge.label && typeof edge.label === 'string' && edge.label.trim()) {
+      const lbl = figma.createText();
+      lbl.fontName = regFont;
+      lbl.fontSize = 9;
+      lbl.characters = edge.label;
+      lbl.fills = [{ type: 'SOLID', color: { r: 0.5, g: 0.52, b: 0.58 } }];
+      // Position label at the midpoint between source and target
+      lbl.x = (src.x + tgt.x) / 2 + PADDING / 2;
+      lbl.y = (src.y + tgt.y) / 2 + PADDING / 2;
+      frame.appendChild(lbl);
     }
+
+    frame.appendChild(connector);
   }
 
   figma.currentPage.appendChild(frame);
