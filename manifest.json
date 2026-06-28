@@ -1,9 +1,10 @@
 {
   "name": "Architect Builder",
-  "id": "architect-builder",
+  "id": "1652926849888448888",
   "api": "1.0.0",
   "main": "dist/plugin/main.js",
   "ui": "dist/index.html",
+  "documentAccess": "dynamic-page",
   "editorType": ["figma"],
   "permissions": ["currentuser"],
   "networkAccess": {
