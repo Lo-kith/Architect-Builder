@@ -183,6 +183,20 @@ export async function exportToFigma(payload: { nodes: ArchNode[]; edges: ArchEdg
     connector.connectorStart = { endpointNodeId: src.id, magnet: 'AUTO' };
     connector.connectorEnd   = { endpointNodeId: tgt.id, magnet: 'AUTO' };
 
+    // Set connector line style matching React Flow edge style
+    const style = edge.data?.style || 'smoothstep';
+    if (style === 'straight') {
+      connector.connectorLineType = 'STRAIGHT';
+    } else if (style === 'bezier') {
+      connector.connectorLineType = 'CURVED';
+    } else {
+      connector.connectorLineType = 'ELBOWED';
+    }
+
+    // Set stroke caps to show the arrow head at the end
+    connector.connectorStartStrokeCap = 'NONE';
+    connector.connectorEndStrokeCap = 'ARROW_EQUILATERAL';
+
     // Add edge label as text if present
     if (edge.label && typeof edge.label === 'string' && edge.label.trim()) {
       const lbl = figma.createText();
